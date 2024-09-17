@@ -1,7 +1,7 @@
 #!/bin/bash
 # 功能:LAMP一键安装脚本
 # 编写日期:2023/03/17
-# 编写者:俺
+# 编写者:王
 
 echo "LAMP一键安装脚本"
 while true 
