@@ -5,7 +5,8 @@
 
 read -p "请输入数据库地址:" host_name
 read -p "请输入数据库用户名:" sql_username
-read -p "请输入数据库密码:" sql_passwd
+read -s -p "请输入数据库密码:" sql_passwd
+echo ""
 
 while true 
 do 
@@ -18,17 +19,17 @@ do
 输入4取款
 输入5查询
 EOF
-	read -p '请输入序号,取消运行输入其他字符' input
+	read -p '请输入序号,取消运行输入其他字符: ' input
 	case $input in
     "0")
-        mysql -h${host_name} -u${sql_username} -p${sql_passwd} <<EOF
-create database bank;
+        mysql -h"${host_name}" -u"${sql_username}" -p"${sql_passwd}" <<EOF
+create database if not exists bank;
 use bank;
-create table bank(
+create table if not exists bank(
 card_id int(8) zerofill not null primary key auto_increment comment '卡号',
 card_name varchar(8) not null unique key comment '持卡人',
 card_password varchar(16) not null default '88888888' comment '卡密码',
-card_money float(32) not null default 0 comment '余额'
+card_money decimal(10,2) not null default 0 comment '余额'
 )charset=utf8;
 EOF
         echo "数据库初始化完成"
@@ -36,70 +37,83 @@ EOF
 	"1")
         echo "----开户系统----"
         read -p "请输入开户用户名:" user_name
-        read -p "请输入密码:" user_password
-        mysql -h${host_name} -u${sql_username} -p${sql_passwd} <<EOF
+        read -s -p "请输入密码:" user_password
+        echo ""
+        mysql -h"${host_name}" -u"${sql_username}" -p"${sql_passwd}" <<EOF
         use bank;
         insert into bank (card_name,card_password) values ('${user_name}','${user_password}');
 EOF
-        command=${?}
-        if [ ${command} != 0 ];then
+        command=$?
+        if [ "${command}" != 0 ];then
 			echo "开户失败,请检查输入"
-            exit 1
-        fi 
-        echo "用户 ${user_name} 开户成功"
+        else
+            echo "用户 ${user_name} 开户成功"
+        fi
 		;;
 	"2")
         echo "----销户系统----"
         read -p "请输入用户名:" user_name
-        read -p "请输入密码:" user_password
-        mysql -h${host_name} -u${sql_username} -p${sql_passwd} <<EOF
+        read -s -p "请输入密码:" user_password
+        echo ""
+        mysql -h"${host_name}" -u"${sql_username}" -p"${sql_passwd}" <<EOF
         use bank;
         delete from bank where card_name='${user_name}' and card_password='${user_password}' and card_money=0;
 EOF
-        command=${?}
-        if [ ${command} != 0 ];then
+        command=$?
+        if [ "${command}" != 0 ];then
 			echo "销户失败,请检查输入"
-            exit 1 
+        else
+            echo "用户 ${user_name} 销户成功"
         fi
-        echo "用户 ${user_name} 销户成功"
 		;;
 	"3")
         echo "----存款系统----"
         read -p "请输入用户名:" user_name
-        read -p "请输入密码:" user_password
-        read -p "请输入需要存款的金额" user_money
-        mysql -h${host_name} -u${sql_username} -p${sql_passwd} <<EOF
+        read -s -p "请输入密码:" user_password
+        echo ""
+        read -p "请输入需要存款的金额: " user_money
+        mysql -h"${host_name}" -u"${sql_username}" -p"${sql_passwd}" <<EOF
         use bank;
         update bank set card_money=card_money+'${user_money}' where card_name='${user_name}' and card_password='${user_password}';
 EOF
-        command=${?}
-        if [ ${command} != 0 ];then
+        command=$?
+        if [ "${command}" != 0 ];then
 			echo "存款失败,请检查输入"
-            exit 1 
+        else
+            echo "用户 ${user_name} 存款 ${user_money} 成功"
         fi
-        echo "用户 ${user_name} 存款 ${user_money}成功"
         ;;
 	"4")
         echo "----取款系统----"
         read -p "请输入用户名:" user_name
-        read -p "请输入密码:" user_password
+        read -s -p "请输入密码:" user_password
+        echo ""
         read -p "请输入需要取款的金额:" user_money
-        mysql -h${host_name} -u${sql_username} -p${sql_passwd} <<EOF
-        use bank;
-        update bank set card_money=card_money-'${user_money}' where card_name='${user_name}' and card_password='${user_password}';
+        # 先检查余额是否充足
+        balance=$(mysql -h"${host_name}" -u"${sql_username}" -p"${sql_passwd}" -sN -e "use bank; select card_money from bank where card_name='${user_name}' and card_password='${user_password}';")
+        if [ -z "${balance}" ];then
+            echo "用户名或密码错误"
+        elif [ "$(echo "${balance} >= ${user_money}" | bc)" -eq 1 ];then
+            mysql -h"${host_name}" -u"${sql_username}" -p"${sql_passwd}" <<EOF
+            use bank;
+            update bank set card_money=card_money-'${user_money}' where card_name='${user_name}' and card_password='${user_password}';
 EOF
-        command=${?}
-        if [ ${command} != 0 ];then
-			echo "取款失败,请检查输入"
-            exit 1 
+            command=$?
+            if [ "${command}" != 0 ];then
+                echo "取款失败,请检查输入"
+            else
+                echo "用户 ${user_name} 取款 ${user_money} 成功"
+            fi
+        else
+            echo "余额不足，当前余额为: ${balance}"
         fi
-        echo "用户 ${user_name} 取款 ${user_money}成功"
         ;;
 	"5")
         echo "----查询系统----"
         read -p "请输入用户名:" user_name
-        read -p "请输入密码:" user_password
-        mysql -h${host_name} -u${sql_username} -p${sql_passwd} <<EOF
+        read -s -p "请输入密码:" user_password
+        echo ""
+        mysql -h"${host_name}" -u"${sql_username}" -p"${sql_passwd}" <<EOF
         use bank;
         select card_money from bank where card_name='${user_name}' and card_password='${user_password}';
 EOF

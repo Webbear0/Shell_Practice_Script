@@ -4,10 +4,10 @@
 # 编写者:俺
 
 printf "********************************\n"
-printf "%-4s ChinaSkills 2022 CSK\n"
-printf "%-6s Module C Linux\n"
+printf "    ChinaSkills 2022 CSK\n"
+printf "      Module C Linux\n"
 printf "\n"
-printf "%-8s >>"`hostname`"<<\n"
-echo "  >> "`cat /etc/redhat-release | cut -f 2-4 -d " "`"<<"
-echo ">>"`date`"<<"
+printf "        >>%s<<\n" "$(hostname)"
+[ -e /etc/redhat-release ] && echo "  >> "$(cat /etc/redhat-release | cut -f 2-4 -d " ")"<<" || printf "\n"
+echo ">>"$(date)"<<"
 printf "********************************\n"

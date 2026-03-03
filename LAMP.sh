@@ -3,6 +3,11 @@
 # 编写日期:2023/03/17
 # 编写者:俺
 
+if [ $(id -u) -ne 0 ]; then
+	echo "请以root身份运行此脚本"
+	exit 1
+fi
+
 echo "LAMP一键安装脚本"
 while true 
 do 
@@ -13,7 +18,7 @@ do
 输入4安装WordPress
 输入5安装Discuz
 EOF
-	read -p '请输入序号,取消运行输入其他字符' input
+	read -p '请输入序号,取消运行输入其他字符: ' input
 	case $input in 
 	"1") 
 		yum install -y httpd php php-xml php-mbstring php-mysql*
@@ -30,7 +35,7 @@ EOF
 		systemctl enable --now mariadb 
 		sleep 3
 		mysql_secure_installation && read -p '请输入数据库密码:' input 
-		mysql -u root --password=${input}<<EOF
+		mysql -u root --password="${input}"<<EOF
 		grant all privileges on *.* to 'root'@'%' identified by '${input}';
 		flush privileges;
 EOF
@@ -44,8 +49,8 @@ EOF
 EOF
 		while true 
 		do
-		read -p "请输入安装的版本" input
-		if [ ${input} == '4.9' ];then
+		read -p "请输入安装的版本: " input
+		if [ "${input}" == '4.9' ];then
 			curl -O https://files.phpmyadmin.net/phpMyAdmin/4.9.11/phpMyAdmin-4.9.11-all-languages.tar.gz
 			tar -xzvf phpMyAdmin-4.9.11-all-languages.tar.gz
 			rm -f phpMyAdmin-4.9.11-all-languages.tar.gz 
@@ -54,7 +59,7 @@ EOF
 			systemctl restart httpd
 			echo "安装完成"
 			exit 0
-		elif [ ${input} == '4.4' ];then
+		elif [ "${input}" == '4.4' ];then
 			curl -O https://files.phpmyadmin.net/phpMyAdmin/4.4.15.10/phpMyAdmin-4.4.15.10-all-languages.tar.gz
 			tar -xzvf phpMyAdmin-4.4.15.10-all-languages.tar.gz
 			rm -f phpMyAdmin-4.4.15.10-all-languages.tar.gz
@@ -63,6 +68,8 @@ EOF
 			systemctl restart httpd
 			echo "安装完成"
 			exit 0
+		else
+			echo "版本输入错误，请输入 4.9 或 4.4"
 		fi
 		done
 		;;
@@ -74,29 +81,31 @@ EOF
 EOF
 		while true 
 		do
-		read -p "请输入安装的版本" input
-		if [ ${input} == '5.9' ];then
+		read -p "请输入安装的版本: " input
+		if [ "${input}" == '5.9' ];then
 			curl -O https://wordpress.org/wordpress-5.9.5.tar.gz
 			tar -xzvf wordpress-5.9.5.tar.gz
 			rm -f  wordpress-5.9.5.tar.gz
 			mv wordpress/* /var/www/html/
 			chown -R apache:apache /var/www/html/
 			read -p '请输入数据库密码:' input
-			mysql -uroot -p${input} -e "create database wordpress;"
+			mysql -uroot -p"${input}" -e "create database wordpress;"
 			systemctl restart httpd
 			echo "安装完成"
 			exit 0			
-		elif [ ${input} == '4.9' ];then
+		elif [ "${input}" == '4.9' ];then
 			curl -O https://wordpress.org/wordpress-4.9.22.tar.gz
 			tar -xzvf wordpress-4.9.22.tar.gz
 			rm -f wordpress-4.9.22.tar.gz
 			mv wordpress/* /var/www/html/
 			chown -R apache:apache /var/www/html/
 			read -p '请输入数据库密码:' input 
-			mysql -uroot -p${input} -e "create database wordpress;"
+			mysql -uroot -p"${input}" -e "create database wordpress;"
 			systemctl restart httpd
 			echo "安装完成"
 			exit 0		
+		else
+			echo "版本输入错误，请输入 5.9 或 4.9"
 		fi
 		done
 		;;
