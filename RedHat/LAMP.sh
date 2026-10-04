@@ -1,7 +1,6 @@
 #!/bin/bash
-# 功能:LAMP一键安装脚本
+# 功能:LAMP一键安装脚本_Centos
 # 编写日期:2023/03/17
-# 编写者:俺
 
 if [ $(id -u) -ne 0 ]; then
 	echo "请以root身份运行此脚本"
